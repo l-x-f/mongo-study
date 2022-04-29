@@ -7,46 +7,48 @@
     <title>Document</title>
     <script src="https://unpkg.com/vue@3.2.31/dist/vue.global.js"></script>
     <script src="https://unpkg.com/axios@0.26.1/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+    <!-- 导入组件库 -->
+    <script src="https://unpkg.com/element-plus"></script>
   </head>
   <body>
+    <div id="app">
+      <input type="file" @change="handleChange" />
+      <el-button @change="handleUpload">开始上传</el-button>
+    </div>
     <script>
-      // 创建 axios 实例
-      const request = axios.create({
-        // baseURL: 'http://localhost:3000',
-        timeout: 10 * 1000 // 请求超时时间
-      })
+      const { createApp, ref } = Vue
 
-      // 异常拦截处理器
-      const errorHandler = error => {
-        return Promise.reject(error)
+      /*切割文件方法*/
+      function sliceFiles(file, num) {
+        var fileList = []
+        var singleSize = Math.ceil(file.size / num)
+        var location = 0
+        while (location < file.size) {
+          fileList.push(file.slice(location, location + singleSize))
+          location += singleSize
+        }
+        return fileList
       }
 
-      // 请求拦截器
-      request.interceptors.request.use(config => {
-        return { ...config }
-      }, errorHandler)
+      const app = createApp({
+        setup(props) {
+          const handleChange = e => {
+            const file = e.target.files[0]
+            console.log(file)
+          }
+          const handleUpload = e => {
+            console.log(e)
+          }
 
-      // 响应拦截器
-      request.interceptors.response.use(response => {
-        console.log(response, 'response')
-
-        const data = response.data
-        if (data.code && data.code !== 200) {
-          return Promise.reject(new Error(data.message || 'Error'))
+          return {
+            handleChange,
+            handleUpload
+          }
         }
-        if (response.config.responseType === 'blob') {
-          return response
-        }
-        return Promise.resolve(data)
-      }, errorHandler)
-
-      request
-        .get('http://192.168.7.132:8081/api/common/download?type=1', {
-          responseType: 'blob'
-        })
-        .then(res => {
-          console.log(res, 'res')
-        })
+      })
+      app.use(ElementPlus)
+      app.mount('#app')
     </script>
   </body>
 </html>
