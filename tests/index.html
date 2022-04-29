@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://unpkg.com/vue@3.2.31/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios@0.26.1/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <script>
+      // 创建 axios 实例
+      const request = axios.create({
+        // baseURL: 'http://localhost:3000',
+        timeout: 10 * 1000 // 请求超时时间
+      })
+
+      // 异常拦截处理器
+      const errorHandler = error => {
+        return Promise.reject(error)
+      }
+
+      // 请求拦截器
+      request.interceptors.request.use(config => {
+        return { ...config }
+      }, errorHandler)
+
+      // 响应拦截器
+      request.interceptors.response.use(response => {
+        console.log(response, 'response')
+
+        const data = response.data
+        if (data.code && data.code !== 200) {
+          return Promise.reject(new Error(data.message || 'Error'))
+        }
+        if (response.config.responseType === 'blob') {
+          return response
+        }
+        return Promise.resolve(data)
+      }, errorHandler)
+
+      request
+        .get('http://192.168.7.132:8081/api/common/download?type=1', {
+          responseType: 'blob'
+        })
+        .then(res => {
+          console.log(res, 'res')
+        })
+    </script>
+  </body>
+</html>

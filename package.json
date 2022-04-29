@@ -9,9 +9,11 @@
     "prettier": "prettier ./src/**/*.{js,jsx,ts,tsx} --write"
   },
   "dependencies": {
+    "@types/mime-types": "^2.1.1",
     "koa": "^2.13.4",
     "koa-cors": "^0.0.16",
     "koa-router": "^10.1.1",
+    "mime-types": "^2.1.35",
     "mongodb": "^4.4.1",
     "mongoose": "^6.2.8"
   },
