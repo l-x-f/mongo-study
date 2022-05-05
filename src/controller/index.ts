@@ -1,6 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 import mime from 'mime-types'
+import Formidable from 'formidable'
+
+let fileList: any[] = []
 class Index {
   /**
    * 列表
@@ -29,13 +32,21 @@ class Index {
    * @param ctx
    */
   async upload(ctx: CTX) {
-    const filePath = path.join(__dirname, 'user.ts')
-    const file = fs.createReadStream(filePath)
-    const mimeType = mime.lookup(filePath) as string
-    ctx.response.set('content-type', mimeType)
-    ctx.response.set('code', '200')
-    ctx.response.set('msg', 'success')
-    ctx.body = file
+    const file = ctx.request.files.file as Formidable.File
+    const body = ctx.request.body
+    const data = fs.readFileSync(file.filepath)
+    fileList.push(data)
+    fs.unlinkSync(file.filepath)
+
+    if (body.isLast === 'true') {
+      const writeData = Buffer.concat(fileList)
+      fs.writeFileSync(
+        path.join(__dirname, '../../static/uploads/', +new Date() + '-' + body.filename),
+        writeData
+      )
+      fileList = []
+    }
+    ctx.body = file.filepath
   }
 }
 

@@ -14,41 +14,67 @@
   <body>
     <div id="app">
       <input type="file" @change="handleChange" />
-      <el-button @change="handleUpload">开始上传</el-button>
+      <el-button @click="handleUpload">开始上传</el-button>
+      <el-progress :percentage="percentage" />
     </div>
     <script>
       const { createApp, ref } = Vue
+      const originFile = ref([])
+      const fileList = ref([])
+      const percentage = ref(0)
 
       /*切割文件方法*/
-      function sliceFiles(file, num) {
-        var fileList = []
-        var singleSize = Math.ceil(file.size / num)
-        var location = 0
+      function sliceFiles(file) {
+        const number = file.size > 1024 * 1024 ? Math.ceil(file.size / (1024 * 1024)) : 1
+        const fileList = []
+        let singleSize = Math.ceil(file.size / number)
+        let location = 0
         while (location < file.size) {
           fileList.push(file.slice(location, location + singleSize))
           location += singleSize
         }
         return fileList
       }
-
       const app = createApp({
         setup(props) {
           const handleChange = e => {
             const file = e.target.files[0]
-            console.log(file)
+            percentage.value = 0
+            originFile.value = file
+            fileList.value = sliceFiles(file)
           }
-          const handleUpload = e => {
-            console.log(e)
+          const handleUpload = async e => {
+            const data = []
+            fileList.value.forEach((file, index) => {
+              const formData = new FormData()
+              formData.append('file', file)
+              formData.append('index', index)
+
+              const isLast = index === fileList.value.length - 1
+              if (isLast) {
+                formData.append('isLast', isLast)
+                formData.append('filename', originFile.value.name)
+              }
+              data.push(formData)
+            })
+
+            for ([index, item] of data.entries()) {
+              await axios.post('/upload', item, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+              })
+              const temp = Math.ceil((index / (fileList.value.length - 1)) * 100)
+              percentage.value = data.length === 1 ? 100 : temp
+            }
           }
 
           return {
+            percentage,
             handleChange,
             handleUpload
           }
         }
       })
-      app.use(ElementPlus)
-      app.mount('#app')
+      app.use(ElementPlus).mount('#app')
     </script>
   </body>
 </html>
